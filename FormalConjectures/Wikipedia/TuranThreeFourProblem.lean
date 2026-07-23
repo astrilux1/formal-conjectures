@@ -94,7 +94,7 @@ theorem IsThreeUniform.card_le_choose {n : ℕ} {E : Finset (Finset (Fin n))}
 @[category API, AMS 5]
 theorem isK43Free_empty {V : Type*} : IsK43Free (∅ : Finset (Finset V)) := by
   intro s hs hsub
-  obtain ⟨t, hts, htcard⟩ := s.exists_smaller_set 3 (by omega)
+  obtain ⟨t, hts, htcard⟩ := Finset.exists_subset_card_eq (show 3 ≤ s.card by omega)
   simpa using hsub (Finset.mem_powersetCard.mpr ⟨hts, htcard⟩)
 
 /-- The set of edge counts of $K_4^{(3)}$-free 3-graphs on `n` vertices is bounded above. -/
@@ -134,7 +134,7 @@ theorem exK43_le_choose (n : ℕ) : exK43 n ≤ n.choose 3 := by
 @[category test, AMS 5]
 theorem not_isK43Free_complete :
     ¬ IsK43Free (Finset.powersetCard 3 (univ : Finset (Fin 4))) := fun h ↦
-  h univ (by simp) subset_rfl
+  h univ (by simp) (Finset.Subset.refl _)
 
 /-- On three vertices there is no room for a $K_4^{(3)}$, so the unique triple can be taken:
 $\operatorname{ex}_3(3, K_4^{(3)}) = 1$. -/
@@ -149,9 +149,49 @@ theorem exK43_three : exK43 3 = 1 := by
   have hfree : IsK43Free ({univ} : Finset (Finset (Fin 3))) := by
     intro s hs _
     have hle := Finset.card_le_univ s
-    rw [Finset.card_univ, Fintype.card_fin] at hle
+    rw [Fintype.card_fin] at hle
     omega
   simpa using le_exK43 {univ} huni hfree
+
+/-- Deleting any single triple from the complete 3-graph on four vertices leaves a
+$K_4^{(3)}$-free 3-graph: a copy of $K_4^{(3)}$ requires all four triples, and four vertices
+spanning only three of them do not count. -/
+@[category test, AMS 5]
+theorem isK43Free_erase_complete (t : Finset (Fin 4)) (ht : t.card = 3) :
+    IsK43Free ((Finset.powersetCard 3 (univ : Finset (Fin 4))).erase t) := by
+  intro s hs hsub
+  have hs_univ : s = univ :=
+    Finset.eq_of_subset_of_card_le (Finset.subset_univ s)
+      (by rw [Finset.card_univ, Fintype.card_fin, hs])
+  have ht_mem : t ∈ Finset.powersetCard 3 s := by
+    rw [hs_univ]
+    exact Finset.mem_powersetCard.mpr ⟨Finset.subset_univ t, ht⟩
+  exact (Finset.mem_erase.mp (hsub ht_mem)).1 rfl
+
+/-- On four vertices the extremal number is $3$: all four triples would form a $K_4^{(3)}$,
+while any three triples are $K_4^{(3)}$-free. -/
+@[category test, AMS 5]
+theorem exK43_four : exK43 4 = 3 := by
+  refine le_antisymm ?_ ?_
+  · unfold exK43
+    apply csSup_le ⟨0, ∅, fun e he ↦ by simp at he, isK43Free_empty, Finset.card_empty⟩
+    rintro m ⟨E, hE, hfree, rfl⟩
+    by_contra h
+    push_neg at h
+    have hsub : E ⊆ Finset.powersetCard 3 (univ : Finset (Fin 4)) := fun e he ↦
+      Finset.mem_powersetCard.mpr ⟨Finset.subset_univ e, hE e he⟩
+    have hcard : (Finset.powersetCard 3 (univ : Finset (Fin 4))).card = 4 := by decide
+    have hEq : E = Finset.powersetCard 3 (univ : Finset (Fin 4)) :=
+      Finset.eq_of_subset_of_card_le hsub (by omega)
+    exact not_isK43Free_complete (hEq ▸ hfree)
+  · have ht : ({0, 1, 2} : Finset (Fin 4)).card = 3 := by decide
+    have hcard :
+        ((Finset.powersetCard 3 (univ : Finset (Fin 4))).erase {0, 1, 2}).card = 3 := by
+      decide
+    have hle := le_exK43 _
+      (fun e he ↦ (Finset.mem_powersetCard.mp (Finset.mem_of_mem_erase he)).2)
+      (isK43Free_erase_complete _ ht)
+    omega
 
 /-! ## Main problem -/
 
