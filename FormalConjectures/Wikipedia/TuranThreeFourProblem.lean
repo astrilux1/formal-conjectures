@@ -78,7 +78,7 @@ noncomputable def coveringT43 (n : ℕ) : ℕ :=
   sInf {m : ℕ | ∃ E : Finset (Finset (Fin n)), IsThreeUniform E ∧
     (∀ s : Finset (Fin n), s.card = 4 → ∃ e ∈ E, e ⊆ s) ∧ E.card = m}
 
-/-! ## Basic API -/
+/- ## Basic API -/
 
 /-- A 3-uniform hypergraph on `n` vertices has at most $\binom{n}{3}$ edges. -/
 @[category API, AMS 5]
@@ -106,6 +106,14 @@ theorem bddAbove_setOf_isK43Free (n : ℕ) :
   rintro m ⟨E, hE, -, rfl⟩
   exact hE.card_le_choose
 
+/-- The edge count of the empty hypergraph realizes `0` as an attainable edge count of a
+$K_4^{(3)}$-free 3-graph on `n` vertices. -/
+@[category API, AMS 5]
+theorem zero_mem_setOf_isK43Free (n : ℕ) :
+    0 ∈ {m : ℕ | ∃ E : Finset (Finset (Fin n)),
+      IsThreeUniform E ∧ IsK43Free E ∧ E.card = m} :=
+  ⟨∅, fun e he ↦ by simp at he, isK43Free_empty, Finset.card_empty⟩
+
 /-- Every $K_4^{(3)}$-free 3-graph on `n` vertices witnesses a lower bound for the Turán
 number `exK43 n`. -/
 @[category API, AMS 5]
@@ -117,18 +125,18 @@ theorem le_exK43 {n : ℕ} (E : Finset (Finset (Fin n))) (hE : IsThreeUniform E)
 @[category API, AMS 5]
 theorem exists_extremal (n : ℕ) :
     ∃ E : Finset (Finset (Fin n)), IsThreeUniform E ∧ IsK43Free E ∧ E.card = exK43 n :=
-  Nat.sSup_mem ⟨0, ∅, fun e he ↦ by simp at he, isK43Free_empty, Finset.card_empty⟩
+  Nat.sSup_mem (Set.nonempty_of_mem (zero_mem_setOf_isK43Free n))
     (bddAbove_setOf_isK43Free n)
 
 /-- The trivial upper bound $\operatorname{ex}_3(n, K_4^{(3)}) \leq \binom{n}{3}$. -/
 @[category API, AMS 5]
 theorem exK43_le_choose (n : ℕ) : exK43 n ≤ n.choose 3 := by
   unfold exK43
-  apply csSup_le ⟨0, ∅, fun e he ↦ by simp at he, isK43Free_empty, Finset.card_empty⟩
+  apply csSup_le (Set.nonempty_of_mem (zero_mem_setOf_isK43Free n))
   rintro m ⟨E, hE, -, rfl⟩
   exact hE.card_le_choose
 
-/-! ## Sanity checks -/
+/- ## Sanity checks -/
 
 /-- The complete 3-graph on four vertices is not $K_4^{(3)}$-free. -/
 @[category test, AMS 5]
@@ -174,7 +182,7 @@ while any three triples are $K_4^{(3)}$-free. -/
 theorem exK43_four : exK43 4 = 3 := by
   refine le_antisymm ?_ ?_
   · unfold exK43
-    apply csSup_le ⟨0, ∅, fun e he ↦ by simp at he, isK43Free_empty, Finset.card_empty⟩
+    apply csSup_le (Set.nonempty_of_mem (zero_mem_setOf_isK43Free 4))
     rintro m ⟨E, hE, hfree, rfl⟩
     by_contra h
     push_neg at h
@@ -193,7 +201,7 @@ theorem exK43_four : exK43 4 = 3 := by
       (isK43Free_erase_complete _ ht)
     omega
 
-/-! ## Main problem -/
+/- ## Main problem -/
 
 /--
 **Turán's (3,4)-problem (1941) [Tu41]**: determine the Turán density
@@ -248,7 +256,7 @@ theorem turan_three_four_problem.variants.exact_value : answer(sorry) ↔
     ∀ k : ℕ, 1 ≤ k → 2 * exK43 (3 * k) = k ^ 2 * (5 * k - 3) := by
   sorry
 
-/-! ## Known results -/
+/- ## Known results -/
 
 /--
 **Katona–Nemetz–Simonovits [KNS64]**: the sequence
