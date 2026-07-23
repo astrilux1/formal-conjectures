@@ -100,13 +100,17 @@ theorem NP_ne_coNP : NP ≠ coNP := by sorry
 /--
 The theorem that the set of complements of languages in P is itself P.
 
-This can be proven by observing that the boolean negation function is computable in polynomial time,
-and that compositions of poly-time computable functions are also poly-time computable.
+This can be proven by observing that the machine witnessing `L ∈ P` also witnesses `Lᶜ ∈ P`
+after composing its output alphabet equivalence with the negation equivalence on `Bool`.
 -/
 @[category textbook, AMS 68]
 theorem coP_eq_P :
     { L | Lᶜ ∈ P } = P := by
-  sorry
+  have key : ∀ L : DecisionProblem, L ∈ P → Lᶜ ∈ P := by
+    rintro L ⟨h⟩
+    exact ⟨h.not⟩
+  ext L
+  exact ⟨fun hL => compl_compl L ▸ key _ hL, fun hL => key L hL⟩
 
 /--
 The theorem that P is a subset of NP.
@@ -118,7 +122,9 @@ language.
 @[category textbook, AMS 68]
 theorem P_subset_NP :
     P ⊆ NP := by
-  sorry
+  rintro L ⟨h⟩
+  refine ⟨0, fun p => L p.1, ⟨h.compFst⟩, fun x => ?_⟩
+  exact ⟨fun hx => ⟨[], by simp, hx⟩, fun ⟨w, _, hw⟩ => hw⟩
 
 /--
 The theorem that P is a subset of coNP.
